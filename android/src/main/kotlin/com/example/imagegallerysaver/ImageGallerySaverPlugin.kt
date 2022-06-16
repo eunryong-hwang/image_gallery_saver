@@ -6,9 +6,11 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.os.Environment
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
+import android.text.TextUtils
+import android.webkit.MimeTypeMap
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
@@ -19,14 +21,10 @@ import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
-import android.text.TextUtils
-import android.webkit.MimeTypeMap
-
 
 class ImageGallerySaverPlugin : FlutterPlugin, MethodCallHandler {
     private var applicationContext: Context? = null
     private var methodChannel: MethodChannel? = null
-
 
     companion object {
         @JvmStatic
@@ -43,7 +41,13 @@ class ImageGallerySaverPlugin : FlutterPlugin, MethodCallHandler {
                 val quality = call.argument<Int>("quality") ?: return
                 val name = call.argument<String>("name")
 
-                result.success(saveImageToGallery(BitmapFactory.decodeByteArray(image, 0, image.size), quality, name))
+                result.success(
+                        saveImageToGallery(
+                                BitmapFactory.decodeByteArray(image, 0, image.size),
+                                quality,
+                                name
+                        )
+                )
             }
             call.method == "saveFileToGallery" -> {
                 val path = call.argument<String>("file") ?: return
@@ -52,13 +56,11 @@ class ImageGallerySaverPlugin : FlutterPlugin, MethodCallHandler {
             }
             else -> result.notImplemented()
         }
-
     }
-
 
     private fun generateUri(extension: String = "", name: String? = null): Uri {
         var fileName = name ?: System.currentTimeMillis().toString()
-        
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             var uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
 
@@ -75,7 +77,10 @@ class ImageGallerySaverPlugin : FlutterPlugin, MethodCallHandler {
             }
             return applicationContext?.contentResolver?.insert(uri, values)!!
         } else {
-            val storePath = Environment.getExternalStorageDirectory().absolutePath + File.separator + Environment.DIRECTORY_PICTURES
+            val storePath =
+                    Environment.getExternalStorageDirectory().absolutePath +
+                            File.separator +
+                            Environment.DIRECTORY_PICTURES
             val appDir = File(storePath)
             if (!appDir.exists()) {
                 appDir.mkdir()
@@ -88,19 +93,27 @@ class ImageGallerySaverPlugin : FlutterPlugin, MethodCallHandler {
     }
 
     private fun getMIMEType(extension: String): String? {
-        var type: String? = null;
+        var type: String? = null
         if (!TextUtils.isEmpty(extension)) {
             type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase())
         }
         return type
     }
 
-
-
-    private fun saveImageToGallery(bmp: Bitmap, quality: Int, name: String?): HashMap<String, Any?> {
+    private fun saveImageToGallery(
+            bmp: Bitmap,
+            quality: Int,
+            name: String?
+    ): HashMap<String, Any?> {
         val context = applicationContext
 
-        var fileUri = Uri.fromFile(File(context?.cacheDir,name ?: System.currentTimeMillis().toString()));
+        var fileUri =
+                Uri.fromFile(
+                        File(
+                                context?.cacheDir,
+                                name + ".jpg" ?: System.currentTimeMillis().toString() + ".jpg"
+                        )
+                )
 
         return try {
             val fos = context?.contentResolver?.openOutputStream(fileUri)!!
@@ -148,8 +161,8 @@ class ImageGallerySaverPlugin : FlutterPlugin, MethodCallHandler {
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         applicationContext = null
-        methodChannel!!.setMethodCallHandler(null);
-        methodChannel = null;
+        methodChannel!!.setMethodCallHandler(null)
+        methodChannel = null
     }
 
     private fun onAttachedToEngine(applicationContext: Context, messenger: BinaryMessenger) {
@@ -157,12 +170,13 @@ class ImageGallerySaverPlugin : FlutterPlugin, MethodCallHandler {
         methodChannel = MethodChannel(messenger, "image_gallery_saver")
         methodChannel!!.setMethodCallHandler(this)
     }
-
 }
 
-class SaveResultModel(var isSuccess: Boolean,
-                      var filePath: String? = null,
-                      var errorMessage: String? = null) {
+class SaveResultModel(
+        var isSuccess: Boolean,
+        var filePath: String? = null,
+        var errorMessage: String? = null
+) {
     fun toHashMap(): HashMap<String, Any?> {
         val hashMap = HashMap<String, Any?>()
         hashMap["isSuccess"] = isSuccess
