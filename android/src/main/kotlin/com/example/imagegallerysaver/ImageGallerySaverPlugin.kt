@@ -106,14 +106,11 @@ class ImageGallerySaverPlugin : FlutterPlugin, MethodCallHandler {
             name: String?
     ): HashMap<String, Any?> {
         val context = applicationContext
-
-        var fileUri =
-                Uri.fromFile(
-                        File(
-                                context?.cacheDir,
-                                name + ".jpg" ?: System.currentTimeMillis().toString() + ".jpg"
-                        )
-                )
+        var filename = System.currentTimeMillis().toString() + ".jpg"
+        if (name != null) {
+            filename = name + ".jpg"
+        }
+        var fileUri = Uri.fromFile(File(context?.cacheDir, filename))
 
         return try {
             val fos = context?.contentResolver?.openOutputStream(fileUri)!!
