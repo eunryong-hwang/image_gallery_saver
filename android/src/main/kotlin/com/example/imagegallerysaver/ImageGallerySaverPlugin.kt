@@ -100,7 +100,13 @@ class ImageGallerySaverPlugin : FlutterPlugin, MethodCallHandler {
     private fun saveImageToGallery(bmp: Bitmap, quality: Int, name: String?): HashMap<String, Any?> {
         val context = applicationContext
 //        val fileUri = generateUri("jpg", name = name)
-        var fileUri = Uri.fromFile(context?.cacheDir);
+        var fileName = name ?: System.currentTimeMillis().toString();
+
+//        if (extension.isNotEmpty()) {
+//            fileName += (".$extension")
+//        }
+        
+        var fileUri = Uri.fromFile(File(context?.cacheDir,fileName));
 //        var fileUri = Uri.
         return try {
             val fos = context?.contentResolver?.openOutputStream(fileUri)!!
